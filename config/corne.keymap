@@ -4,7 +4,7 @@
  *
  * Thumb mods (no home-row mods):
  *   left  thumbs:  [RCTRL]  [MO NAV]  [SPACE]
- *   right thumbs:  [SPACE]    [CTRL/Enter]  [GUI]
+ *   right thumbs:  [SPACE]    [Enter]  [GUI]
  *   Shift lives on the left outer column (base) as you specified.
  *
  * ZMK Studio ready: every macro below is compiled into the firmware, so you can
@@ -122,7 +122,7 @@
          *  ESC  Q   W   E   R   T   |   Y   U   I   O   P   BSPC
          *  TAB  A   S   D   F   G   |   H   J   K   L   :   DEL   (: tap / ; hold)
          *  SFT  Z   X   C   V   B   |   N   M   ,   .   /   MO(SYM)
-         *          RCTRL  NAV  SPC   |  SPC  CTRL/RET  GUI
+         *          RCTRL  NAV  SPC   |  SPC  RET  GUI
          * ============================================================================== */
         base_layer {
             display-name = "BASE";
@@ -130,7 +130,7 @@
    &kp ESC    &kp Q  &kp W  &kp E  &kp R  &kp T        &kp Y  &kp U  &kp I      &kp O    &kp P     &kp BSPC
    &kp TAB    &kp A  &kp S  &kp D  &kp F  &kp G        &kp H  &kp J  &kp K      &kp L    &scln SEMI LS(SEMI)  &kp DEL
    &kp LSHFT  &kp Z  &kp X  &kp C  &kp V  &kp B        &kp N  &kp M  &kp COMMA  &kp DOT  &kp FSLH  &mo SYM
-                     &kp RCTRL  &mo NAV  &kp SPACE    &kp SPACE  &mt RCTRL RET  &kp LGUI
+                     &kp RCTRL  &mo NAV  &kp SPACE    &kp SPACE  &kp RET  &kp LGUI
             >;
         };
 
