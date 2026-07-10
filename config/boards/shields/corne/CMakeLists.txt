@@ -1,6 +1,5 @@
-if(CONFIG_CORNE_CUSTOM_DISPLAY OR CONFIG_CORNE_LAYER_SYNC)
+if(CONFIG_CORNE_CUSTOM_DISPLAY)
   zephyr_library_named(corne_custom_display)
   zephyr_library_include_directories(${CMAKE_SOURCE_DIR}/include)
-  zephyr_library_sources_ifdef(CONFIG_CORNE_CUSTOM_DISPLAY src/custom_status_screen.c)
-  zephyr_library_sources_ifdef(CONFIG_CORNE_LAYER_SYNC src/behavior_layer_fwd.c)
+  zephyr_library_sources(src/custom_status_screen.c)
 endif()

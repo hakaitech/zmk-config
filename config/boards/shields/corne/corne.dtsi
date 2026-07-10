@@ -13,15 +13,6 @@
 		zmk,physical-layout = &layout_0;
 	};
 
-	behaviors {
-		/* Node name must stay <= 8 chars: it is sent verbatim over the
-		 * split transport (ZMK_SPLIT_RUN_BEHAVIOR_DEV_LEN = 9). */
-		lay_fwd: lay_fwd {
-			compatible = "corne,behavior-layer-fwd";
-			#binding-cells = <1>;
-		};
-	};
-
 	default_transform: keymap_transform_0 {
 		compatible = "zmk,matrix-transform";
 		columns = <12>;

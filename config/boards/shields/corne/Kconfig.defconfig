@@ -46,8 +46,3 @@ config CORNE_CUSTOM_DISPLAY
 	bool "Custom Corne display"
 	depends on ZMK_DISPLAY
 
-config CORNE_LAYER_SYNC
-	bool "Forward active layer from central to peripheral"
-	depends on ZMK_SPLIT
-	default y
-

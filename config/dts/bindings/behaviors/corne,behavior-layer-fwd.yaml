@@ -1,9 +1,0 @@
-# SPDX-License-Identifier: MIT
-
-description: |
-  Forwards the active layer index from the split central to peripherals
-  (global-locality behavior; param1 carries the layer index).
-
-compatible: "corne,behavior-layer-fwd"
-
-include: one_param.yaml
