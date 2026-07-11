@@ -4,6 +4,14 @@ A three-layer ZMK layout for a 42-key Corne, rebuilt from your `Defy.json`. Drop
 `corne.keymap` into your `zmk-config/config/` folder (replacing the reference
 repo's file), keep ZMK Studio enabled, and flash.
 
+## Keymap
+
+![Corne keymap](corne_keymap.svg)
+
+Auto-generated from [`config/corne.keymap`](config/corne.keymap) by
+[keymap-drawer](https://github.com/caksoylar/keymap-drawer) on every push (the
+`draw` workflow, or `make svg` locally), so it always reflects the current layout.
+
 ## The three layers
 
 ```
