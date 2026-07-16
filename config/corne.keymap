@@ -33,6 +33,15 @@
             flavor = "tap-preferred";
             bindings = <&kp>, <&kp>;
         };
+
+        /* esc/backtick hold-tap:  tap = Esc   hold = ` (GRAVE) */
+        esc_grv: esc_grv {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            tapping-term-ms = <200>;
+            flavor = "tap-preferred";
+            bindings = <&kp>, <&kp>;
+        };
     };
 
     /* ------------------------------------------------------------------ *
@@ -119,7 +128,7 @@
         compatible = "zmk,keymap";
 
         /* ================================ BASE / QWERTY ==================================
-         *  ESC  Q   W   E   R   T   |   Y   U   I   O   P   BSPC
+         *  ESC  Q   W   E   R   T   |   Y   U   I   O   P   BSPC   (ESC: tap / ` hold)
          *  TAB  A   S   D   F   G   |   H   J   K   L   :   DEL   (: tap / ; hold)
          *  SFT  Z   X   C   V   B   |   N   M   ,   .   /   MO(SYM)
          *          RCTRL  NAV  SPC   |  SPC  RET  GUI
@@ -127,7 +136,7 @@
         base_layer {
             display-name = "BASE";
             bindings = <
-   &kp ESC    &kp Q  &kp W  &kp E  &kp R  &kp T        &kp Y  &kp U  &kp I      &kp O    &kp P     &kp BSPC
+   &esc_grv GRAVE ESC  &kp Q  &kp W  &kp E  &kp R  &kp T        &kp Y  &kp U  &kp I      &kp O    &kp P     &kp BSPC
    &kp TAB    &kp A  &kp S  &kp D  &kp F  &kp G        &kp H  &kp J  &kp K      &kp L    &scln SEMI LS(SEMI)  &kp DEL
    &kp LSHFT  &kp Z  &kp X  &kp C  &kp V  &kp B        &kp N  &kp M  &kp COMMA  &kp DOT  &kp FSLH  &mo SYM
                      &kp RCTRL  &mo NAV  &kp SPACE    &kp SPACE  &kp RET  &kp LGUI
