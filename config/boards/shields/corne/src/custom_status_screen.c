@@ -2,17 +2,18 @@
  * Custom Corne status screens (SSD1306, mounted 90deg CCW; art in screen_art.h is
  * pre-rotated to native 128x32).
  *
- * Both halves show a last-key readout ("R#C#" for the main rows, "T#" for thumbs)
- * fed by zmk_position_state_changed. Each half raises that event LOCALLY for its own
- * keys, so we filter to source==LOCAL and each display shows only its own half.
+ * Both halves show a keypress PULSE (expanding-ring "ping") in the top zone, fired
+ * on every key press. Each half raises zmk_position_state_changed LOCALLY for its
+ * own keys, so we filter to source==LOCAL and each display pulses on its own keys.
  *
  * Left (central) - "Float": layer initial in a box + charging + battery, plus the
- *   readout at the top.
- * Right (peripheral) - functional: readout (top) / battery % as a big number
+ *   pulse at the top.
+ * Right (peripheral) - functional: pulse (top) / battery % as a big number
  *   (center) / Bluetooth link status (bottom).
  *
- * The event listener only stashes the last position in a static; all LVGL work
- * happens on the display timer (LVGL thread), so no cross-thread LVGL calls.
+ * The event listener only sets a flag; all LVGL work happens on the display timer
+ * (LVGL thread), so no cross-thread LVGL calls. The pulse advances one frame per
+ * tick (~50ms) and retriggers from frame 0 on a fresh press.
  */
 
 #include <stdio.h>
@@ -39,8 +40,9 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #define TICK_MS 50
 
 /* native coords: arg2 = native_x (viewer vertical), arg3 = native_y (viewer horizontal) */
-#define READOUT_NX 117    /* readout row, top of both displays (viewer_y ~4) */
-#define RD_PITCH   6      /* per-char step along viewer_x */
+#define PULSE_NX 107      /* pulse top zone, centered on viewer_x=16 (viewer top-left ~6,1) */
+#define PULSE_NY 6
+#define PULSE_FRAMES 5
 
 /* ── shared helpers ── */
 static void set_hidden(lv_obj_t *obj, bool hidden) {
@@ -48,72 +50,40 @@ static void set_hidden(lv_obj_t *obj, bool hidden) {
     else lv_obj_clear_flag(obj, LV_OBJ_FLAG_HIDDEN);
 }
 
-/* position (0-41 global transform index) → "R#C#" / "T#" label.
- * NOTE: peripheral raises its own global positions (right overlay col-offset=6).
- * If the on-device right-hand labels are off, adjust this single function. */
-static void pos_label(int32_t pos, char *buf, size_t n) {
-    if (pos < 0) { buf[0] = '\0'; return; }
-    if (pos >= 36) {                 /* thumbs 36-41 (36-38 L, 39-41 R) */
-        snprintf(buf, n, "T%u", (unsigned)((pos - 36) % 3) + 1);
-        return;
-    }
-    unsigned row = (unsigned)pos / 12;              /* 0..2 */
-    unsigned col = (unsigned)pos % 12;              /* 0..11 */
-    unsigned half = (col < 6) ? col + 1 : 12 - col; /* 1..6, mirrored per half */
-    snprintf(buf, n, "R%uC%u", row + 1, half);
-}
-
-/* keypress capture (event thread) → static; rendered on the LVGL timer */
-static volatile int32_t kp_pos = -1;
+/* keypress → flag (event thread); the pulse is advanced on the LVGL timer */
+static volatile bool kp_hit = false;
 static int kp_listener(const zmk_event_t *eh) {
     const struct zmk_position_state_changed *ev = as_zmk_position_state_changed(eh);
     if (ev && ev->state && ev->source == ZMK_POSITION_STATE_CHANGE_SOURCE_LOCAL) {
-        kp_pos = ev->position;
+        kp_hit = true;
     }
     return ZMK_EV_EVENT_BUBBLE;
 }
 ZMK_LISTENER(kp_disp, kp_listener);
 ZMK_SUBSCRIPTION(kp_disp, zmk_position_state_changed);
 
-/* readout: 4 glyph slots, centered on viewer_x=16 (used by both halves) */
-static const lv_img_dsc_t *const rc_digit[10] = {
-    &rc_0, &rc_1, &rc_2, &rc_3, &rc_4, &rc_5, &rc_6, &rc_7, &rc_8, &rc_9,
+/* pulse: expanding-ring frames, cycled once per press (used by both halves) */
+static const lv_img_dsc_t *const pulse_dsc[PULSE_FRAMES] = {
+    &pulse_0, &pulse_1, &pulse_2, &pulse_3, &pulse_4,
 };
-static lv_obj_t *rd_chars[4];
-static int32_t rd_shown = -2;
-static const lv_img_dsc_t *rc_glyph(char c) {
-    switch (c) {
-    case 'R': return &rc_R;
-    case 'C': return &rc_C;
-    case 'T': return &rc_T;
-    default:  return rc_digit[c - '0'];
-    }
+static lv_obj_t *pulse_img;
+static int pulse_i = -1;   /* -1 idle; 0..PULSE_FRAMES-1 playing */
+static void render_pulse(void) {
+    if (kp_hit) { kp_hit = false; pulse_i = 0; }
+    if (pulse_i < 0) { set_hidden(pulse_img, true); return; }
+    lv_image_set_src(pulse_img, pulse_dsc[pulse_i]);
+    set_hidden(pulse_img, false);
+    if (++pulse_i >= PULSE_FRAMES) pulse_i = -1;
 }
-static void render_readout(int32_t pos) {
-    if (pos == rd_shown) return;
-    rd_shown = pos;
-    char buf[6];
-    pos_label(pos, buf, sizeof(buf));
-    int len = strlen(buf);
-    int ny = 16 - (len * RD_PITCH - 1) / 2;   /* center on viewer_x=16 */
-    for (int i = 0; i < 4; i++) {
-        if (i < len) {
-            lv_image_set_src(rd_chars[i], rc_glyph(buf[i]));
-            lv_obj_set_pos(rd_chars[i], READOUT_NX, ny + i * RD_PITCH);
-            set_hidden(rd_chars[i], false);
-        } else {
-            set_hidden(rd_chars[i], true);
-        }
-    }
-}
-static void make_readout(lv_obj_t *screen) {
-    for (int i = 0; i < 4; i++) rd_chars[i] = lv_img_create(screen);
-    rd_shown = -2;
+static void make_pulse(lv_obj_t *screen) {
+    pulse_img = lv_img_create(screen);
+    lv_obj_set_pos(pulse_img, PULSE_NX, PULSE_NY);
+    pulse_i = -1;
 }
 
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
 
-/* ── Left · Float + readout ── */
+/* ── Left · Float + pulse ── */
 static const lv_img_dsc_t *const digit_dsc[10] = {
     &dig_0, &dig_1, &dig_2, &dig_3, &dig_4, &dig_5, &dig_6, &dig_7, &dig_8, &dig_9,
 };
@@ -149,7 +119,7 @@ static void set_pct_row(uint8_t pct, int native_x, int center_vx) {
 }
 
 static void tick_cb(lv_timer_t *timer) {
-    render_readout(kp_pos);
+    render_pulse();
 
     static const lv_img_dsc_t *const letters[] = {&ltr_b, &ltr_s, &ltr_n};
     zmk_keymap_layer_index_t li = zmk_keymap_highest_layer_active();
@@ -185,7 +155,7 @@ lv_obj_t *zmk_display_status_screen(void) {
     fill_rect = make_fill(screen);
     lv_obj_set_pos(fill_rect, LBAR_NX, LBAR_NY);
     for (int i = 0; i < 4; i++) pct_chars[i] = lv_img_create(screen);
-    make_readout(screen);
+    make_pulse(screen);
 
     lv_timer_create(tick_cb, TICK_MS, NULL);
     tick_cb(NULL);
@@ -194,7 +164,7 @@ lv_obj_t *zmk_display_status_screen(void) {
 
 #else /* peripheral */
 
-/* ── Right · readout / battery% / link ── */
+/* ── Right · pulse / battery% / link ── */
 #define BATT_NX    72     /* big battery digits (viewer_y ~42) */
 #define BATT_PITCH 11
 #define BPCT_NX    79     /* small % after the big number */
@@ -239,7 +209,7 @@ static void render_batt(uint8_t pct) {
 }
 
 static void tick_cb(lv_timer_t *timer) {
-    render_readout(kp_pos);
+    render_pulse();
     bool linked = zmk_split_bt_peripheral_is_connected();
     lv_image_set_src(rune_img, linked ? &rune_ok : &rune_x);
     render_batt(zmk_battery_state_of_charge());
@@ -252,7 +222,7 @@ lv_obj_t *zmk_display_status_screen(void) {
     lv_image_set_src(bg, &bg_right);
     lv_obj_set_pos(bg, 0, 0);
 
-    make_readout(screen);
+    make_pulse(screen);
 
     for (int i = 0; i < 3; i++) batt_chars[i] = lv_img_create(screen);
     batt_pct_obj = lv_img_create(screen);
