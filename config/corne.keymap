@@ -1,11 +1,13 @@
 /*
  * Corne (crkbd) keymap  --  ported from a Dygma Defy "Defy" layout
- * 3-layer system:  0 = BASE (QWERTY)   1 = SYM (symbols/numbers)   2 = NAV (macros/arrows)
+ * 4-layer system:  0 = BASE (QWERTY)   1 = SYM (symbols/numbers)   2 = NAV (macros/arrows)
+ *                  3 = FN (F-keys / page-nav / system), held SYM + NAV together
  *
  * Thumb mods (no home-row mods):
- *   left  thumbs:  [RCTRL]  [Enter / hold=NAV]  [SPACE]
- *   right thumbs:  [SPACE]    [Enter]  [GUI]
- *   Enter is on BOTH middle thumbs; the left one holds for the NAV layer.
+ *   left  thumbs:  [RCTRL]  [Enter / hold=NAV]   [SPACE]
+ *   right thumbs:  [SPACE]  [Enter / hold=LALT]  [GUI]
+ *   Enter is on BOTH middle thumbs: the left one holds for the NAV layer,
+ *   the right one holds for Left Alt. Both use the same balanced hold-tap.
  *   Shift lives on the left outer column (base).
  *
  * ZMK Studio ready: every macro below is compiled into the firmware, so you can
@@ -20,6 +22,7 @@
 #define BASE 0
 #define SYM  1
 #define NAV  2
+#define FN   3
 
 / {
     /* ------------------------------------------------------------------ *
@@ -64,6 +67,33 @@
             quick-tap-ms = <150>;
             flavor = "balanced";
             bindings = <&mo>, <&kp>;
+        };
+
+        /* thumb mod-tap:  tap = Enter   hold = Left Alt.
+         * Mirror of lt_nav on the opposite thumb -- same balanced flavor, tapping
+         * term and quick-tap guard, so both Enter keys behave identically.
+         * Deliberately not ZMK's built-in &mt, which is hold-preferred and would
+         * fire Alt on any key pressed while the thumb is still down. */
+        ret_alt: ret_alt {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            tapping-term-ms = <200>;
+            quick-tap-ms = <150>;
+            flavor = "balanced";
+            bindings = <&kp>, <&kp>;
+        };
+    };
+
+    /* ------------------------------------------------------------------ *
+     *  CONDITIONAL LAYERS                                                 *
+     * ------------------------------------------------------------------ */
+    conditional_layers {
+        compatible = "zmk,conditional-layers";
+
+        /* SYM (right pinky) + NAV (left thumb) held together -> FN */
+        sym_nav_fn {
+            if-layers = <SYM NAV>;
+            then-layer = <FN>;
         };
     };
 
@@ -154,7 +184,8 @@
          *  ESC  Q   W   E   R   T   |   Y   U   I   O   P   BSPC   (ESC: tap / ` hold)
          *  TAB  A   S   D   F   G   |   H   J   K   L   :   DEL   (: tap / ; hold)
          *  SFT  Z   X   C   V   B   |   N   M   ,   .   /   MO(SYM)
-         *          RCTRL  ENT/NAV  SPC   |  SPC  RET  GUI   (left mid: tap Enter / hold NAV)
+         *          RCTRL  ENT/NAV  SPC   |  SPC  ENT/ALT  GUI
+         *          (left mid: tap Enter / hold NAV;  right mid: tap Enter / hold LAlt)
          * ============================================================================== */
         base_layer {
             display-name = "BASE";
@@ -162,7 +193,7 @@
    &esc_grv GRAVE ESC  &kp Q  &kp W  &kp E  &kp R  &kp T        &kp Y  &kp U  &kp I      &kp O    &kp P     &kp BSPC
    &kp TAB    &kp A  &kp S  &kp D  &kp F  &kp G        &kp H  &kp J  &kp K      &kp L    &scln SEMI LS(SEMI)  &kp DEL
    &kp LSHFT  &kp Z  &kp X  &kp C  &kp V  &kp B        &kp N  &kp M  &kp COMMA  &kp DOT  &kp FSLH  &mo SYM
-                     &kp RCTRL  &lt_nav NAV RET  &kp SPACE    &kp SPACE  &kp RET  &kp LGUI
+                     &kp RCTRL  &lt_nav NAV RET  &kp SPACE    &kp SPACE  &ret_alt LALT RET  &kp LGUI
             >;
         };
 
@@ -197,6 +228,26 @@
    &trans  &kp LG(LEFT)  &kp LG(RIGHT) &kp LG(UP) &kp LG(DOWN)    &kp LG(LS(Q))   &kp LEFT    &kp DOWN   &kp UP      &kp RIGHT     &m_cs_p       &trans
    &trans  &none         &none         &none      &none           &none           &kp LC(S)   &kp LC(W)  &kp LC(D)   &kp LC(INS)   &kp INS       &trans
                                   &trans  &trans  &kp SPACE      &kp SPACE  &trans  &trans
+            >;
+        };
+
+        /* ================================= FN / F-keys ===================================
+         *  Conditional layer: active only while SYM and NAV are BOTH held.
+         *  Outer columns stay transparent -> Esc/Tab/Shift and Bspc/Del still work.
+         *  Thumbs stay transparent too, so Ctrl / Alt / GUI / Space remain live here.
+         *  Left bottom row is blanked (&none), same rule as NAV.
+         *   .   F1   F2   F3   F4   F5  |  F6     F7     F8    F9   F10   .
+         *   .   F11  F12  --   --   --  |  HOME   PGDN   PGUP  END  --    .
+         *   .   --   --   --   --   --  |  PSCRN  PAUSE  MENU  --   --    .
+         *  Page-nav sits on the same row and finger order as NAV's LEFT/DOWN/UP/RIGHT.
+         * ============================================================================== */
+        fn_layer {
+            display-name = "FN";
+            bindings = <
+   &trans  &kp F1   &kp F2   &kp F3  &kp F4  &kp F5      &kp F6     &kp F7           &kp F8     &kp F9   &kp F10  &trans
+   &trans  &kp F11  &kp F12  &none   &none   &none       &kp HOME   &kp PG_DN        &kp PG_UP  &kp END  &none    &trans
+   &trans  &none    &none    &none   &none   &none       &kp PSCRN  &kp PAUSE_BREAK  &kp K_APP  &none    &none    &trans
+                             &trans  &trans  &trans      &trans     &trans           &trans
             >;
         };
     };
