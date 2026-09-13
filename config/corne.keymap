@@ -214,19 +214,20 @@
         };
 
         /* ================================ NAV / macros ===================================
-         *  No F-keys. Left macros shifted up one row. Left bottom row is intentionally
-         *  blanked (&none) so nothing fires by accident; right top row = media keys.
+         *  No F-keys (those live on FN). Left macros shifted up one row. The left bottom
+         *  row is blanked (&none) so nothing fires by accident, apart from PrintScreen on
+         *  the C column -- "C for capture", one thumb hold away. Right top row = media keys.
          *  left hand = your Defy macros            right hand = media / arrows / ctrl-chords
          *   .   :q   :w   csJ  cs%  cs"  |  PREV  PLAY  NEXT  VOL- VOL+   .
          *   .   gui< gui> gui^ guiv g+SQ |  LEFT  DOWN  UP    RIGHT csP    .
-         *   .   --   --   --   --   --   |  C+S   C+W   C+D   C+INS INS    .   (blanked)
+         *   .   --   --   PSCR --   --   |  C+S   C+W   C+D   C+INS INS    .
          * ============================================================================== */
         nav_layer {
             display-name = "NAV";
             bindings = <
    &trans  &m_vim_q      &m_vim_w      &m_cs_j    &m_cs_pct       &m_cs_dq        &kp C_PREV  &kp C_PP   &kp C_NEXT  &kp C_VOL_DN  &kp C_VOL_UP  &trans
    &trans  &kp LG(LEFT)  &kp LG(RIGHT) &kp LG(UP) &kp LG(DOWN)    &kp LG(LS(Q))   &kp LEFT    &kp DOWN   &kp UP      &kp RIGHT     &m_cs_p       &trans
-   &trans  &none         &none         &none      &none           &none           &kp LC(S)   &kp LC(W)  &kp LC(D)   &kp LC(INS)   &kp INS       &trans
+   &trans  &none         &none         &kp PSCRN  &none           &none           &kp LC(S)   &kp LC(W)  &kp LC(D)   &kp LC(INS)   &kp INS       &trans
                                   &trans  &trans  &kp SPACE      &kp SPACE  &trans  &trans
             >;
         };
