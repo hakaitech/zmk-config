@@ -140,6 +140,20 @@ static const lv_img_dsc_t ltr_n = {
     .data_size = sizeof(ltr_n_map),
     .data = ltr_n_map,
 };
+/* Solid diamond -- the only rune with a filled middle band, so it cannot be
+ * mistaken for the top-heavy B, the sparse S or the two-bar N at 15x9. */
+static const uint8_t ltr_f_map[] = {
+    0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0x1f, 0xf0, 0x1f, 0xf0,
+    0x1f, 0xf0, 0xff, 0xfe, 0xff, 0xfe, 0xff, 0xfe, 0x1f, 0xf0, 0x1f, 0xf0,
+    0x1f, 0xf0,
+};
+static const lv_img_dsc_t ltr_f = {
+    .header.cf = LV_COLOR_FORMAT_I1,
+    .header.w = 15,
+    .header.h = 9,
+    .data_size = sizeof(ltr_f_map),
+    .data = ltr_f_map,
+};
 static const uint8_t dig_0_map[] = {
     0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0x70, 0x88, 0x70,
 };
