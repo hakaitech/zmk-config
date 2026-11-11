@@ -121,7 +121,8 @@ static void set_pct_row(uint8_t pct, int native_x, int center_vx) {
 static void tick_cb(lv_timer_t *timer) {
     render_pulse();
 
-    static const lv_img_dsc_t *const letters[] = {&ltr_b, &ltr_s, &ltr_n, &ltr_f};
+    /* order = keymap layer order: HOME, GAME, OBS, MACROS, PICK */
+    static const lv_img_dsc_t *const letters[] = {&ltr_h, &ltr_g, &ltr_o, &ltr_t, &ltr_p};
     BUILD_ASSERT(ARRAY_SIZE(letters) == ZMK_KEYMAP_LAYERS_LEN,
                  "one rune per layer: add a glyph to screen_art.h when adding a layer");
     zmk_keymap_layer_index_t li = zmk_keymap_highest_layer_active();
